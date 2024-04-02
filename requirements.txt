@@ -1,6 +1,6 @@
 pandas
 torch
 DataLoader
-from sklearn.model_selection import train_test_split
+sklearn
 streamlit
 numpy
