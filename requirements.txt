@@ -1,6 +1,6 @@
 pandas
 torch
 DataLoader
-sklearn
+scikit-learn
 streamlit
 numpy
