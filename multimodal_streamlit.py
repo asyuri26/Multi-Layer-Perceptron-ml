@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-# Definisikan model MLP
+# Halaman utama
 def main():
     st.title('Project ANN Multimodal Kelompok 6')
     menu = ["Home", "Machine Learning"]
@@ -24,17 +24,22 @@ def main():
     else :
         st.subheader("Machine Learning")
         st.text("Breast Cancer Dataset")
+        #dataset kankernya
         data = pd.read_csv('BreastCancerData.csv')
         data = data.replace(to_replace=['B','M'], value=[0,1], inplace=False)
         data.drop(labels = [data.columns[32], data.columns[0]], axis=1, inplace=True)
         st.write(data)
 
+        #diagnosis digunakan untuk prediksi
         X = data.drop('diagnosis', axis=1).values
         y = data['diagnosis'].values
+
+        #untuk mensplit data dari train dan testing
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=101)
         st.write(f'Number of training examples: {len(X_train)}')
         st.write(f'Number of testing examples: {len(X_test)}')
 
+        #ukuran batchnya 100
         train_loader = DataLoader(list(zip(X_train, y_train)), batch_size=100, shuffle=True)
         test_loader = DataLoader(list(zip(X_test, y_test)), batch_size=100, shuffle=False)
 
@@ -71,17 +76,20 @@ def main():
         train_accuracies = []
         test_losses = []
         test_accuracies = []
+
+        #input sizenya pake 30
         input_size = X_train.shape[1]
         hidden_size = 100
         output_size = 2
 
-        # Inisialisasi model, kriteria, dan optimizer
+        # Inisialisasi model dan optimizersnya
         model = MLP(input_size, hidden_size, output_size)
         st.write("Model MLP", model)
         criterion = nn.CrossEntropyLoss()
         optimizer_options = ['SGD', 'Adam', 'RMSprop']
         selected_optimizer = st.selectbox('Select Optimizer', optimizer_options)
 
+        #dipilih dipilih
         if selected_optimizer == 'SGD':
             optimizer = optim.SGD(model.parameters(), lr=0.001)
         elif selected_optimizer == 'Adam':
@@ -119,6 +127,10 @@ def main():
                 correct = 0
                 test_loss = 0
                 total = 0
+                prediksi = []
+                label = []
+                #untuk validasi
+                class_names = ["Benign", "Malignant"]
                 with torch.no_grad():
                     for inputs, labels in test_loader:
                         inputs = torch.tensor(inputs, dtype=torch.float32)
@@ -129,18 +141,23 @@ def main():
                         _, predicted = torch.max(outputs.data, 1)
                         total += labels.size(0)
                         correct += (predicted == labels).sum().item()
+                        prediksi.extend(predicted.tolist())
+                        label.extend(labels.tolist())
                 test_losses.append(test_loss/len(test_loader))
                 test_accuracies.append(correct/total)
             st.subheader("Akurasi")
-            st.write("test_accuracies : ",test_accuracies)
+            st.write("Test_Accuracies : ",test_accuracies)
             st.line_chart({
                 'Train Accuracy': train_accuracies,
                 'Test Accuracy': test_accuracies
                 })
-            st.write("loss accuracies : ", test_losses)
+            st.write("Loss Accuracies : ", test_losses)
             st.line_chart({
                 'Train Loss': train_losses,
                 'Test Loss': test_losses
                 })
+            st.subheader("Hasil Validasi")
+            for i in range(len(prediksi)):
+                st.write(f"Data {i+1}: Prediksi = {class_names[prediksi[i]]}, Label Asli = {class_names[label[i]]}")
 if __name__ == '__main__':
     main()
